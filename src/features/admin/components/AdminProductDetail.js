@@ -3,16 +3,13 @@ import { StarIcon } from "@heroicons/react/20/solid";
 import { RadioGroup } from "@headlessui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import {
-  fetchProductByIdAsync,
-  selectProductById,
-  selectProductListStatus,
-} from "../productSlice";
+import { fetchProductByIdAsync, selectProductById } from "../../product/productSlice";
+
 import { addToCartAsync, selectItems } from "../../cart/cartSlice";
 import { selectLoggedInUser } from "../../auth/authSlice";
 import { discountedPrice } from "../../../app/constants";
-import { useAlert } from "react-alert";
-import { Grid } from "react-loader-spinner";
+import { updateUserAsync } from "../../user/userSlice";
+
 
 const colors = [
   { name: "White", class: "bg-white", selectedClass: "ring-gray-400" },
@@ -41,31 +38,20 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function ProductDetail() {
+export default function AdminProductDetail() {
   const [selectedColor, setSelectedColor] = useState(colors[0]);
   const [selectedSize, setSelectedSize] = useState(sizes[2]);
   const user = useSelector(selectLoggedInUser);
-  const items = useSelector(selectItems);
   const dispatch = useDispatch();
   const product = useSelector(selectProductById);
-  const alert = useAlert();
   // const items = useSelector(selectItems);
-  const status = useSelector(selectProductListStatus);
 
   const params = useParams();
   const handleCart = (e) => {
     e.preventDefault();
-    if (items.findIndex((item) => item.product.id === product.id) < 0) {
-      const newItem = {
-        product: product.id,
-        quantity: 1,
-        user: user.id,
-      };
-      dispatch(addToCartAsync(newItem));
-      alert.success("Item Added to Cart");
-    } else {
-      alert.error("Item Already Added");
-    }
+    const newItem = { ...product, quantity: 1, user: user.id };
+    delete newItem["id"];
+    dispatch(addToCartAsync(newItem));
   };
   useEffect(() => {
     dispatch(fetchProductByIdAsync(params.id));
@@ -73,23 +59,6 @@ export default function ProductDetail() {
 
   return (
     <div className="bg-white">
-      {status === "loading" ? (
-        <Grid
-          height="80"
-          width="80"
-          color="#4fa94d"
-          ariaLabel="grid-loading"
-          radius="12.5"
-          wrapperStyle={{
-            margin: "0 auto",
-            "justify-content": "center",
-            height: "100vh",
-            "align-items": "center",
-          }}
-          wrapperClass=""
-          visible={true}
-        />
-      ) : null}
       {product && (
         <div className="pt-6">
           <nav aria-label="Breadcrumb">
